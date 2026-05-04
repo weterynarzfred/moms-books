@@ -11,35 +11,58 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: #fff;
-  border-bottom: 1px solid #ddd;
+  background: #000;
+  border-bottom: 1px solid #333;
   flex-shrink: 0;
 }
 
-.topbar h1 { font-size: 1rem; font-weight: 700; }
+.topbar h1 {
+  font-size: 1rem;
+  font-weight: 700;
+}
 
-.topbar-right { display: flex; align-items: center; gap: 8px; }
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-.msg     { font-size: 12px; color: #888; }
-.msg.ok  { color: #16a34a; }
-.msg.err { color: #dc2626; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg {
+  font-size: 12px;
+  color: #ccc;
+}
+.msg.ok {
+  color: #49df80;
+}
+.msg.err {
+  color: #e45959;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .btn-save {
-  padding: 4px 14px;
-  font-size: 13px;
-  background: #2563eb;
-  color: #fff;
+  padding: 2px 14px;
+  font-size: 14px;
+  background: #7fa8ff;
+  color: #000;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
+  font-weight: 700;
 }
-.btn-save:disabled             { opacity: 0.45; cursor: default; }
-.btn-save:not(:disabled):hover { background: #1d4ed8; }
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.btn-save:not(:disabled):hover {
+  background: #8aa9ff;
+}
 
 /* ── table ───────────────────────────────── */
 .table-wrap {
-  flex: 1;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -54,8 +77,8 @@ thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #f0f0f0;
-  border: 1px solid #ddd;
+  background: #333;
+  border: none;
   padding: 6px 20px 6px 8px;
   text-align: left;
   font-size: 11px;
@@ -67,28 +90,42 @@ thead th {
 }
 
 td {
-  border: 1px solid #e5e5e5;
-  padding: 2px;
-  vertical-align: top;
-  background: #fff;
+  border: 1px solid #777;
+  padding: 0;
+  background: #030303;
 }
 
-input, textarea {
+tr:nth-child(2n) td {
+  background: #1a1a1a;
+}
+
+input {
+  display: block;
+}
+
+input,
+textarea {
   display: block;
   width: 100%;
   border: none;
   padding: 4px 6px;
   font: inherit;
+  font-family: serif;
+  color: inherit;
   background: transparent;
   outline: none;
   resize: none;
 }
 
-textarea { min-height: 40px; resize: vertical; }
+textarea {
+  min-height: 40px;
+  resize: vertical;
+}
 
-input:focus, textarea:focus {
-  background: #eff6ff;
-  outline: 2px solid #93c5fd;
+input:focus,
+textarea:focus {
+  background: #022855;
+  outline: 1px solid #005ccc;
   outline-offset: -2px;
   border-radius: 2px;
 }
@@ -102,10 +139,15 @@ input:focus, textarea:focus {
   width: 5px;
   cursor: col-resize;
 }
-.rh:hover { background: #93c5fd; }
+.rh:hover {
+  background: #93c5fd;
+}
 
 /* ── delete column ───────────────────────── */
-.del-cell { text-align: center; padding: 2px !important; }
+.del-cell {
+  text-align: center;
+  padding: 2px !important;
+}
 
 .btn-del {
   width: 26px;
@@ -118,7 +160,10 @@ input:focus, textarea:focus {
   color: #bbb;
   border-radius: 3px;
 }
-.btn-del:hover { background: #fee2e2; color: #dc2626; }
+.btn-del:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
 
 /* ── add book button ─────────────────────── */
 .btn-add {
@@ -134,7 +179,43 @@ input:focus, textarea:focus {
   flex-shrink: 0;
   align-self: flex-start;
 }
-.btn-add:hover { border-color: #2563eb; color: #2563eb; }
+.btn-add:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+/* ── author suggestions ──────────────────── */
+.author-wrap {
+  position: relative;
+}
+
+.author-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  margin: 0;
+  padding: 2px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  min-width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.author-suggestions li {
+  padding: 5px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.author-suggestions li:hover {
+  background: #eff6ff;
+}
 
 /* ── token screen ────────────────────────── */
 .token-screen {
@@ -191,4 +272,6 @@ input:focus, textarea:focus {
   font-size: 13px;
 }
 
-.token-form button:hover { background: #1d4ed8; }
+.token-form button:hover {
+  background: #1d4ed8;
+}

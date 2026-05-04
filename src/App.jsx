@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { loadBooks, saveBooks } from './github';
+import AuthorInput from './AuthorInput';
 import './App.css';
 
 const COLS = [
-  { key: 'author',        label: 'Author', width: 160, textarea: false },
-  { key: 'series',        label: 'Series', width: 160, textarea: false },
-  { key: 'series_number', label: '#',      width:  60, textarea: false },
-  { key: 'title',         label: 'Title',  width: 220, textarea: false },
-  { key: 'note',          label: 'Note',   width: 320, textarea: true  },
+  { key: 'author', label: 'Author', width: 160, textarea: false },
+  { key: 'series', label: 'Series', width: 160, textarea: false },
+  { key: 'series_number', label: '#', width: 60, textarea: false },
+  { key: 'title', label: 'Title', width: 220, textarea: false },
+  { key: 'note', label: 'Note', width: 320, textarea: true },
 ];
 
 let _id = 0;
@@ -21,14 +22,14 @@ const mkRow = () => ({
 });
 
 export default function App() {
-  const [token,  setToken]  = useState(() => localStorage.getItem('gh_token') || '');
-  const [input,  setInput]  = useState('');
-  const [books,  setBooks]  = useState([]);
-  const [sha,    setSha]    = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem('gh_token') || '');
+  const [input, setInput] = useState('');
+  const [books, setBooks] = useState([]);
+  const [sha, setSha] = useState(null);
   const [widths, setWidths] = useState(COLS.map(c => c.width));
-  const [dirty,  setDirty]  = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [status, setStatus] = useState('loading');
-  const [error,  setError]  = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!token) return;
@@ -43,6 +44,11 @@ export default function App() {
         setStatus('');
       });
   }, [token]);
+
+  const allAuthors = useMemo(
+    () => [...new Set(books.map(b => b.author).filter(Boolean))],
+    [books]
+  );
 
   const update = useCallback((id, field, value) => {
     setBooks(prev => prev.map(b => b._id === id ? { ...b, [field]: value } : b));
@@ -82,6 +88,7 @@ export default function App() {
   };
 
   const delRow = (id) => {
+    if (!window.confirm('Delete this row?')) return;
     setBooks(prev => prev.filter(b => b._id !== id));
     setDirty(true);
   };
@@ -127,15 +134,15 @@ export default function App() {
         <h1>Books</h1>
         <div className="topbar-right">
           {status === 'loading' && <span className="msg">Loading…</span>}
-          {status === 'saving'  && <span className="msg">Saving…</span>}
-          {status === 'saved'   && <span className="msg ok">Saved</span>}
+          {status === 'saving' && <span className="msg">Saving…</span>}
+          {status === 'saved' && <span className="msg ok">Saved</span>}
           {error && <span className="msg err" title={error}>Error: {error}</span>}
           <button
             className="btn-save"
             onClick={save}
             disabled={!dirty || status === 'saving'}
           >
-            Save
+            save
           </button>
         </div>
       </header>
@@ -162,13 +169,19 @@ export default function App() {
               <tr key={book._id}>
                 {COLS.map(col => (
                   <td key={col.key}>
-                    {col.textarea
-                      ? <textarea
+                    {col.key === 'author'
+                      ? <AuthorInput
+                        value={book.author}
+                        onChange={v => update(book._id, 'author', v)}
+                        allAuthors={allAuthors}
+                      />
+                      : col.textarea
+                        ? <textarea
                           value={book[col.key]}
                           onChange={e => update(book._id, col.key, e.target.value)}
                           rows={2}
                         />
-                      : <input
+                        : <input
                           type="text"
                           value={book[col.key]}
                           onChange={e => update(book._id, col.key, e.target.value)}
