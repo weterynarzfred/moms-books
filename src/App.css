@@ -135,3 +135,60 @@ input:focus, textarea:focus {
   align-self: flex-start;
 }
 .btn-add:hover { border-color: #2563eb; color: #2563eb; }
+
+/* ── token screen ────────────────────────── */
+.token-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  background: #f9fafb;
+}
+
+.token-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 28px 32px;
+  min-width: 320px;
+}
+
+.token-form label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.token-form input[type="password"] {
+  display: block;
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+  outline: none;
+}
+
+.token-form input[type="password"]:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: -1px;
+  background: #eff6ff;
+}
+
+.token-form button {
+  padding: 7px 14px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.token-form button:hover { background: #1d4ed8; }

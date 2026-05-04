@@ -1,14 +1,18 @@
-import { GITHUB_TOKEN, REPO_OWNER, REPO_NAME, DATA_FILE, BRANCH } from './config';
+import { REPO_OWNER, REPO_NAME, DATA_FILE, BRANCH } from './config';
 
 const BASE = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`;
-const HEADERS = {
-  Authorization: `Bearer ${GITHUB_TOKEN}`,
-  'Content-Type': 'application/json',
-  Accept: 'application/vnd.github+json',
-};
+
+function headers() {
+  const token = localStorage.getItem('gh_token');
+  return {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    Accept: 'application/vnd.github+json',
+  };
+}
 
 export async function loadBooks() {
-  const res = await fetch(`${BASE}?ref=${BRANCH}`, { headers: HEADERS });
+  const res = await fetch(`${BASE}?ref=${BRANCH}`, { headers: headers() });
   if (res.status === 404) return { books: [], sha: null };
   if (!res.ok) throw new Error(`GitHub ${res.status}`);
   const data = await res.json();
@@ -23,7 +27,7 @@ export async function saveBooks(books, sha) {
   if (sha) body.sha = sha;
   const res = await fetch(BASE, {
     method: 'PUT',
-    headers: HEADERS,
+    headers: headers(),
     body: JSON.stringify(body),
   });
   if (!res.ok) {

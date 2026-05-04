@@ -21,6 +21,8 @@ const mkRow = () => ({
 });
 
 export default function App() {
+  const [token,  setToken]  = useState(() => localStorage.getItem('gh_token') || '');
+  const [input,  setInput]  = useState('');
   const [books,  setBooks]  = useState([]);
   const [sha,    setSha]    = useState(null);
   const [widths, setWidths] = useState(COLS.map(c => c.width));
@@ -29,6 +31,7 @@ export default function App() {
   const [error,  setError]  = useState(null);
 
   useEffect(() => {
+    if (!token) return;
     loadBooks()
       .then(({ books, sha }) => {
         setBooks(books.map(b => ({ ...b, _id: ++_id })));
@@ -39,12 +42,39 @@ export default function App() {
         setError(err.message);
         setStatus('');
       });
-  }, []);
+  }, [token]);
 
   const update = useCallback((id, field, value) => {
     setBooks(prev => prev.map(b => b._id === id ? { ...b, [field]: value } : b));
     setDirty(true);
   }, []);
+
+  const submitToken = (e) => {
+    e.preventDefault();
+    const t = input.trim();
+    if (!t) return;
+    localStorage.setItem('gh_token', t);
+    setToken(t);
+  };
+
+  if (!token) {
+    return (
+      <div className="token-screen">
+        <form onSubmit={submitToken} className="token-form">
+          <label htmlFor="pat">GitHub Personal Access Token</label>
+          <input
+            id="pat"
+            type="password"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="ghp_..."
+            autoFocus
+          />
+          <button type="submit">Continue</button>
+        </form>
+      </div>
+    );
+  }
 
   const addRow = () => {
     setBooks(prev => [...prev, mkRow()]);
