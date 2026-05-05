@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
+import { parseName } from 'humanparser';
 import { useBooks } from './useBooks';
 import SuggestInput from './SuggestInput';
 import GroupHeaderInput from './GroupHeaderInput';
@@ -35,10 +36,20 @@ function cmpNum(a, b) {
   return an - bn;
 }
 
+function authorSortKey(name) {
+  if (!name) return '';
+  const { firstName, lastName } = parseName(name);
+  return (lastName ? `${lastName} ${firstName}` : firstName).toLowerCase();
+}
+
 function sortBooks(books, sort) {
+  const getKey = sort.key === 'author'
+    ? b => authorSortKey(b.author)
+    : b => (b[sort.key] ?? '').toLowerCase();
+
   return [...books].sort((a, b) => {
-    const av = (a[sort.key] ?? '').toLowerCase();
-    const bv = (b[sort.key] ?? '').toLowerCase();
+    const av = getKey(a);
+    const bv = getKey(b);
     if (av === '' && bv !== '') return 1;
     if (bv === '' && av !== '') return -1;
     const primary = (av < bv ? -1 : av > bv ? 1 : 0) * sort.dir;
@@ -131,7 +142,16 @@ export default function App() {
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(book);
     }
-    return [...map.entries()];
+    const getGroupKey = groupBy === 'author'
+      ? ([name]) => authorSortKey(name)
+      : ([name]) => (name ?? '').toLowerCase();
+    return [...map.entries()].sort((a, b) => {
+      const av = getGroupKey(a);
+      const bv = getGroupKey(b);
+      if (av === '' && bv !== '') return 1;
+      if (bv === '' && av !== '') return -1;
+      return av < bv ? -1 : av > bv ? 1 : 0;
+    });
   }, [displayedBooks, groupBy]);
 
   const handleGroupBy = (val) => {
