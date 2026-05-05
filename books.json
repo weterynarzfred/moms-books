@@ -124,5 +124,23 @@
     "series_number": "2",
     "title": "Ruiny",
     "note": ""
+  },
+  {
+    "id": "2b4df254-e62e-4ec4-9937-0976b11a59ac",
+    "lastEdit": 1777969558608,
+    "author": "John Norman",
+    "series": "Gor",
+    "series_number": "1",
+    "title": "Tarnsman of Gor",
+    "note": ""
+  },
+  {
+    "id": "d6069c09-b20d-48ca-ba58-921c82290301",
+    "lastEdit": 1777969590848,
+    "author": "Gail Carriger",
+    "series": "Protektorat Parasola",
+    "series_number": "1",
+    "title": "Bezduszna",
+    "note": ""
   }
 ]
