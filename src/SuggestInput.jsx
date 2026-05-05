@@ -3,6 +3,7 @@ import Fuse from 'fuse.js';
 
 export default function SuggestInput({ value, onChange, allValues }) {
   const [suggestions, setSuggestions] = useState([]);
+  const [focused, setFocused] = useState(false);
   const timerRef     = useRef(null);
   const containerRef = useRef(null);
 
@@ -13,6 +14,7 @@ export default function SuggestInput({ value, onChange, allValues }) {
 
   useEffect(() => {
     clearTimeout(timerRef.current);
+    if (!focused) { setSuggestions([]); return; }
     timerRef.current = setTimeout(() => {
       const q = value.trim();
       if (!q) { setSuggestions([]); return; }
@@ -20,16 +22,7 @@ export default function SuggestInput({ value, onChange, allValues }) {
       setSuggestions(results);
     }, 250);
     return () => clearTimeout(timerRef.current);
-  }, [value, fuse]);
-
-  useEffect(() => {
-    const hide = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target))
-        setSuggestions([]);
-    };
-    document.addEventListener('mousedown', hide);
-    return () => document.removeEventListener('mousedown', hide);
-  }, []);
+  }, [value, fuse, focused]);
 
   return (
     <div ref={containerRef} className="author-wrap">
@@ -37,6 +30,8 @@ export default function SuggestInput({ value, onChange, allValues }) {
         type="text"
         value={value}
         onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => { setFocused(false); setSuggestions([]); }}
       />
       {suggestions.length > 0 && (
         <ul className="author-suggestions">
