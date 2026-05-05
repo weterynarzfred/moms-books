@@ -14,6 +14,9 @@ const COLS = [
 
 const SORT_DEFAULT = { key: 'author', dir: 1 };
 
+const bookData = (b) =>
+  JSON.stringify([b.author, b.series, b.series_number, b.title, b.note]);
+
 function cmpStr(a, b) {
   const av = (a ?? '').toLowerCase();
   const bv = (b ?? '').toLowerCase();
@@ -76,9 +79,11 @@ export default function App() {
 
   const sortedBooks = useMemo(() => sortBooks(books, sort), [books, sort]);
 
-  const [frozenOrder, setFrozenOrder]       = useState(null);
+  const [frozenOrder, setFrozenOrder]           = useState(null);
   const [recentlyEditedId, setRecentlyEditedId] = useState(null);
-  const blurTimerRef = useRef(null);
+  const blurTimerRef     = useRef(null);
+  const isFrozenRef      = useRef(false);
+  const focusSnapshotRef = useRef(null);
 
   const displayedBooks = useMemo(() => {
     if (!frozenOrder) return sortedBooks;
@@ -94,15 +99,22 @@ export default function App() {
     return () => clearTimeout(t);
   }, [recentlyEditedId]);
 
-  const handleCellFocus = () => {
+  const handleCellFocus = (book) => {
     clearTimeout(blurTimerRef.current);
-    setFrozenOrder(prev => prev ?? sortedBooks.map(b => b._id));
+    if (!isFrozenRef.current) {
+      isFrozenRef.current = true;
+      focusSnapshotRef.current = bookData(book);
+      setFrozenOrder(sortedBooks.map(b => b._id));
+    }
   };
 
-  const handleCellBlur = (rowId) => {
+  const handleCellBlur = (book) => {
     blurTimerRef.current = setTimeout(() => {
+      const changed = bookData(book) !== focusSnapshotRef.current;
+      isFrozenRef.current = false;
+      focusSnapshotRef.current = null;
       setFrozenOrder(null);
-      setRecentlyEditedId(rowId);
+      if (changed) setRecentlyEditedId(book._id);
     }, 0);
   };
 
@@ -204,8 +216,8 @@ export default function App() {
       key={book._id}
       data-id={book._id}
       className={recentlyEditedId === book._id ? 'row-edited' : undefined}
-      onFocus={() => handleCellFocus(book._id)}
-      onBlur={() => handleCellBlur(book._id)}
+      onFocus={() => handleCellFocus(book)}
+      onBlur={() => handleCellBlur(book)}
     >
       {visibleCols.map(col => <td key={col.key}>{renderCell(book, col)}</td>)}
       <td className="del-cell">
