@@ -3,7 +3,7 @@ import { parseName } from 'humanparser';
 import { useBooks } from './useBooks';
 import SuggestInput from './SuggestInput';
 import GroupHeaderInput from './GroupHeaderInput';
-import './App.css';
+import './App.scss';
 
 const COLS = [
   { key: 'author', label: 'Author', width: 160, textarea: false, sortable: true },

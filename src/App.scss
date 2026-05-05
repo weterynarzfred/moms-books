@@ -1,0 +1,364 @@
+$bg-cell: #0000;
+$bg-cell-alt: #0001;
+$bg-header: #eee;
+$bg-topbar: #bbb;
+$bg-group-row: #ffffff;
+$border: #777;
+$border-subtle: #0002;
+$focus-bg: #bfdcff;
+$focus-outline: #005ccc;
+$accent: #3b82f6;
+
+@mixin focus-style {
+  background: $focus-bg;
+  outline: 1px solid $focus-outline;
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+// ── app shell ─────────────────────────────────
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+// ── top bar ───────────────────────────────────
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: $bg-topbar;
+  border-bottom: 1px solid $border-subtle;
+  flex-shrink: 0;
+
+  h1 {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.msg {
+  font-size: 12px;
+  color: #ccc;
+
+  &.ok {
+    color: #49df80;
+  }
+  &.err {
+    color: #e45959;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.btn-save {
+  padding: 2px 14px;
+  font-size: 14px;
+  background: #7fa8ff;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 700;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  &:not(:disabled):hover {
+    background: #8aa9ff;
+  }
+}
+
+// ── table ─────────────────────────────────────
+.table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: max-content;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: $bg-header;
+  border: none;
+  padding: 6px 20px 6px 8px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  user-select: none;
+
+  &.sortable {
+    cursor: pointer;
+
+    &:hover {
+      background: #e0e0e0;
+    }
+  }
+}
+
+td {
+  border: solid $border-subtle;
+  border-width: 0 1px;
+  padding: 0;
+  background: $bg-cell;
+}
+
+tr:nth-child(2n) td {
+  background: $bg-cell-alt;
+}
+
+input,
+textarea {
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 4px 6px;
+  font: inherit;
+  font-family: serif;
+  color: inherit;
+  background: transparent;
+  outline: none;
+  resize: none;
+
+  &:focus {
+    @include focus-style;
+  }
+}
+
+textarea {
+  min-height: 40px;
+  resize: vertical;
+}
+
+// ── edited row highlight ──────────────────────
+@keyframes row-edited-fade {
+  0% {
+    box-shadow: inset 0 0 2px 1px $accent;
+  }
+  100% {
+    box-shadow: inset 0 0 2px 1px transparent;
+  }
+}
+
+.row-edited td {
+  animation: row-edited-fade 5s ease-out forwards;
+}
+
+// ── sort arrow ────────────────────────────────
+.sort-arrow {
+  font-size: 10px;
+  margin-left: 2px;
+  opacity: 0.8;
+}
+
+// ── resize handle ─────────────────────────────
+.rh {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+
+  &:hover {
+    background: #93c5fd;
+  }
+}
+
+// ── delete column ─────────────────────────────
+.del-cell {
+  text-align: center;
+  padding: 2px !important;
+}
+
+.btn-del {
+  width: 26px;
+  height: 26px;
+  line-height: 1;
+  font-size: 17px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #bbb;
+  border-radius: 3px;
+
+  &:hover {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+}
+
+// ── add book button ───────────────────────────
+.btn-add {
+  margin: 8px 12px;
+  padding: 6px 12px;
+  border: 1px dashed #bbb;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #666;
+  font: inherit;
+  font-size: 13px;
+  flex-shrink: 0;
+  align-self: flex-start;
+
+  &:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+  }
+}
+
+// ── group select ──────────────────────────────
+.group-select {
+  font: inherit;
+  font-size: 12px;
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid $border-subtle;
+  border-radius: 0px;
+  padding: 2px 6px;
+  cursor: pointer;
+
+  &:focus {
+    outline: 1px solid #555;
+  }
+}
+
+// ── group header row ──────────────────────────
+tr.group-row td {
+  background: $bg-group-row;
+  padding: 0;
+}
+
+.group-input {
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 10px 10px;
+  text-align: center;
+  font: inherit;
+  font-weight: 700;
+  background: transparent;
+  outline: none;
+
+  &:focus {
+    @include focus-style;
+  }
+}
+
+// ── author suggestions ────────────────────────
+.author-wrap {
+  position: relative;
+}
+
+.author-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  margin: 0;
+  padding: 2px 0;
+  list-style: none;
+  background: #222;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  min-width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+
+  li {
+    padding: 5px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover {
+      background: #333;
+    }
+  }
+}
+
+// ── token screen ──────────────────────────────
+.token-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  background: #f9fafb;
+}
+
+.token-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 28px 32px;
+  min-width: 320px;
+
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  input[type="password"] {
+    display: block;
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 7px 10px;
+    font: inherit;
+    font-size: 13px;
+    color: inherit;
+    background: #fff;
+    outline: none;
+
+    &:focus {
+      outline: 2px solid #93c5fd;
+      outline-offset: -1px;
+      background: #eff6ff;
+    }
+  }
+
+  button {
+    padding: 7px 14px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+
+    &:hover {
+      background: #1d4ed8;
+    }
+  }
+}
