@@ -103,7 +103,13 @@ export default function App() {
     _hasDirtyDraft ? ensureFields(_draft.books).map(b => ({ ...b, _id: ++_id })) : []
   );
   const [sha, setSha] = useState(_hasDirtyDraft ? _draft.sha : null);
-  const [widths, setWidths] = useState(COLS.map(c => c.width));
+  const [widths, setWidths] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('col_widths'));
+      if (Array.isArray(saved) && saved.length === COLS.length) return saved;
+    } catch {}
+    return COLS.map(c => c.width);
+  });
   const [dirty, setDirty] = useState(_hasDirtyDraft);
   const [status, setStatus] = useState(_hasDirtyDraft ? '' : 'loading');
   const [error, setError] = useState(null);
@@ -245,6 +251,7 @@ export default function App() {
       setWidths(prev => {
         const next = [...prev];
         next[colIdx] = Math.max(40, w0 + x - x0);
+        localStorage.setItem('col_widths', JSON.stringify(next));
         return next;
       });
     };
