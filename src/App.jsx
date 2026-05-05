@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from 'react';
-import { loadBooks, saveBooks } from './github';
+import { useState, useMemo, Fragment } from 'react';
+import { useBooks } from './useBooks';
 import SuggestInput from './SuggestInput';
+import GroupHeaderInput from './GroupHeaderInput';
 import './App.css';
 
 const COLS = [
@@ -11,107 +12,10 @@ const COLS = [
   { key: 'note', label: 'Note', width: 320, textarea: true },
 ];
 
-let _id = 0;
-
-function contentId(b) {
-  const s = JSON.stringify([b.author, b.series, b.series_number, b.title, b.note]);
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
-  return 'c' + (h >>> 0).toString(36);
-}
-
-function ensureFields(books) {
-  return books.map(b => ({
-    ...b,
-    id: b.id || contentId(b),
-    lastEdit: b.lastEdit || 0,
-  }));
-}
-
-function mergeBooks(localBooks, dirtyIds, tombstones, fetchedBooks) {
-  const dirtySet = new Set(dirtyIds);
-  const fetchedById = new Map(fetchedBooks.map(b => [b.id, b]));
-  const localById = new Map(localBooks.map(b => [b.id, b]));
-  const result = [];
-  const remainingDirtyIds = new Set();
-  const remainingTombstones = {};
-
-  for (const fb of fetchedBooks) {
-    const tombstoneTime = tombstones[fb.id];
-    const lb = localById.get(fb.id);
-
-    if (tombstoneTime !== undefined) {
-      if (fb.lastEdit > tombstoneTime) {
-        result.push(fb);
-      } else {
-        remainingTombstones[fb.id] = tombstoneTime;
-      }
-    } else if (lb && dirtySet.has(fb.id)) {
-      if (lb.lastEdit >= fb.lastEdit) {
-        result.push(lb);
-        remainingDirtyIds.add(lb.id);
-      } else {
-        result.push(fb);
-      }
-    } else if (lb) {
-      result.push(fb);
-    } else {
-      result.push(fb);
-    }
-  }
-
-  for (const lb of localBooks) {
-    if (dirtySet.has(lb.id) && !fetchedById.has(lb.id)) {
-      result.push(lb);
-      remainingDirtyIds.add(lb.id);
-    }
-  }
-
-  return {
-    books: result,
-    dirtyIds: [...remainingDirtyIds],
-    tombstones: remainingTombstones,
-    dirty: remainingDirtyIds.size > 0 || Object.keys(remainingTombstones).length > 0,
-  };
-}
-
-const _draft = (() => {
-  try { return JSON.parse(localStorage.getItem('books_draft')); } catch { return null; }
-})();
-const _hasDirtyDraft = _draft?.dirty === true;
-
-const mkRow = () => ({
-  _id: ++_id,
-  id: crypto.randomUUID(),
-  lastEdit: Date.now(),
-  author: '',
-  series: '',
-  series_number: '',
-  title: '',
-  note: '',
-});
-
-function GroupHeaderInput({ value, onCommit }) {
-  const [val, setVal] = useState(value);
-  useEffect(() => { setVal(value); }, [value]);
-  return (
-    <input
-      className="group-input"
-      value={val}
-      onChange={e => setVal(e.target.value)}
-      onBlur={() => { if (val !== value) onCommit(val); }}
-      onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-    />
-  );
-}
-
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('gh_token') || '');
-  const [input, setInput] = useState('');
-  const [books, setBooks] = useState(() =>
-    _hasDirtyDraft ? ensureFields(_draft.books).map(b => ({ ...b, _id: ++_id })) : []
-  );
-  const [sha, setSha] = useState(_hasDirtyDraft ? _draft.sha : null);
+  const [tokenInput, setTokenInput] = useState('');
+  const { books, dirty, status, error, update, renameGroup, addRow, delRow, save } = useBooks(token);
   const [widths, setWidths] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('col_widths'));
@@ -120,61 +24,9 @@ export default function App() {
     return COLS.map(c => c.width);
   });
   const [groupBy, setGroupBy] = useState(() => localStorage.getItem('group_by') || '');
-  const [dirty, setDirty] = useState(_hasDirtyDraft);
-  const [status, setStatus] = useState(_hasDirtyDraft ? '' : 'loading');
-  const [error, setError] = useState(null);
 
-  const dirtyIdsRef = useRef(new Set(_hasDirtyDraft ? (_draft.dirtyIds || []) : []));
-  const tombstonesRef = useRef(_hasDirtyDraft ? (_draft.tombstones || {}) : {});
-
-  useEffect(() => {
-    if (!token) return;
-    loadBooks()
-      .then(({ books: fetched, sha: fetchedSha }) => {
-        const withFields = ensureFields(fetched);
-        if (_hasDirtyDraft) {
-          const { books: merged, dirtyIds, tombstones, dirty: mergedDirty } = mergeBooks(
-            ensureFields(_draft.books),
-            [...dirtyIdsRef.current],
-            tombstonesRef.current,
-            withFields
-          );
-          setBooks(merged.map(b => ({ ...b, _id: ++_id })));
-          setSha(fetchedSha);
-          dirtyIdsRef.current = new Set(dirtyIds);
-          tombstonesRef.current = tombstones;
-          setDirty(mergedDirty);
-        } else {
-          setBooks(withFields.map(b => ({ ...b, _id: ++_id })));
-          setSha(fetchedSha);
-        }
-        setStatus('');
-      })
-      .catch(err => {
-        setError(err.message);
-        setStatus('');
-      });
-  }, [token]);
-
-  useEffect(() => {
-    const clean = books.map(({ _id, ...rest }) => rest);
-    localStorage.setItem('books_draft', JSON.stringify({
-      books: clean,
-      sha,
-      dirty,
-      dirtyIds: [...dirtyIdsRef.current],
-      tombstones: tombstonesRef.current,
-    }));
-  }, [books, sha, dirty]);
-
-  const allAuthors = useMemo(
-    () => [...new Set(books.map(b => b.author).filter(Boolean))],
-    [books]
-  );
-  const allSeries = useMemo(
-    () => [...new Set(books.map(b => b.series).filter(Boolean))],
-    [books]
-  );
+  const allAuthors = useMemo(() => [...new Set(books.map(b => b.author).filter(Boolean))], [books]);
+  const allSeries  = useMemo(() => [...new Set(books.map(b => b.series).filter(Boolean))],  [books]);
 
   const visibleCols = useMemo(
     () => groupBy ? COLS.filter(c => c.key !== groupBy) : COLS,
@@ -192,88 +44,9 @@ export default function App() {
     return [...map.entries()];
   }, [books, groupBy]);
 
-  const update = useCallback((rowId, field, value) => {
-    setBooks(prev => prev.map(b => {
-      if (b._id !== rowId) return b;
-      dirtyIdsRef.current = new Set([...dirtyIdsRef.current, b.id]);
-      return { ...b, [field]: value, lastEdit: Date.now() };
-    }));
-    setDirty(true);
-  }, []);
-
-  const renameGroup = useCallback((field, oldName, newName) => {
-    if (oldName === newName) return;
-    setBooks(prev => prev.map(b => {
-      if (b[field] !== oldName) return b;
-      dirtyIdsRef.current = new Set([...dirtyIdsRef.current, b.id]);
-      return { ...b, [field]: newName, lastEdit: Date.now() };
-    }));
-    setDirty(true);
-  }, []);
-
-  const submitToken = (e) => {
-    e.preventDefault();
-    const t = input.trim();
-    if (!t) return;
-    localStorage.setItem('gh_token', t);
-    setToken(t);
-  };
-
-  if (!token) {
-    return (
-      <div className="token-screen">
-        <form onSubmit={submitToken} className="token-form">
-          <label htmlFor="pat">GitHub Personal Access Token</label>
-          <input
-            id="pat"
-            type="password"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder="ghp_..."
-            autoFocus
-          />
-          <button type="submit">Continue</button>
-        </form>
-      </div>
-    );
-  }
-
-  const addRow = () => {
-    const row = mkRow();
-    dirtyIdsRef.current = new Set([...dirtyIdsRef.current, row.id]);
-    setBooks(prev => [...prev, row]);
-    setDirty(true);
-  };
-
-  const delRow = (rowId) => {
-    if (!window.confirm('Delete this row?')) return;
-    setBooks(prev => {
-      const book = prev.find(b => b._id === rowId);
-      if (book) {
-        tombstonesRef.current = { ...tombstonesRef.current, [book.id]: Date.now() };
-        dirtyIdsRef.current.delete(book.id);
-      }
-      return prev.filter(b => b._id !== rowId);
-    });
-    setDirty(true);
-  };
-
-  const save = async () => {
-    setStatus('saving');
-    setError(null);
-    try {
-      const clean = books.map(({ _id, ...rest }) => rest);
-      const newSha = await saveBooks(clean, sha);
-      dirtyIdsRef.current = new Set();
-      tombstonesRef.current = {};
-      setSha(newSha);
-      setDirty(false);
-      setStatus('saved');
-      setTimeout(() => setStatus(''), 2000);
-    } catch (err) {
-      setError(err.message);
-      setStatus('');
-    }
+  const handleGroupBy = (val) => {
+    setGroupBy(val);
+    localStorage.setItem('group_by', val);
   };
 
   const startResize = (colIdx, e) => {
@@ -302,25 +75,46 @@ export default function App() {
     document.addEventListener('touchend', onUp);
   };
 
-  const handleGroupBy = (val) => {
-    setGroupBy(val);
-    localStorage.setItem('group_by', val);
+  const submitToken = (e) => {
+    e.preventDefault();
+    const t = tokenInput.trim();
+    if (!t) return;
+    localStorage.setItem('gh_token', t);
+    setToken(t);
+  };
+
+  if (!token) {
+    return (
+      <div className="token-screen">
+        <form onSubmit={submitToken} className="token-form">
+          <label htmlFor="pat">GitHub Personal Access Token</label>
+          <input
+            id="pat"
+            type="password"
+            value={tokenInput}
+            onChange={e => setTokenInput(e.target.value)}
+            placeholder="ghp_..."
+            autoFocus
+          />
+          <button type="submit">Continue</button>
+        </form>
+      </div>
+    );
+  }
+
+  const renderCell = (book, col) => {
+    if (col.key === 'author')
+      return <SuggestInput value={book.author} onChange={v => update(book._id, 'author', v)} allValues={allAuthors} />;
+    if (col.key === 'series')
+      return <SuggestInput value={book.series} onChange={v => update(book._id, 'series', v)} allValues={allSeries} />;
+    if (col.textarea)
+      return <textarea value={book[col.key]} onChange={e => update(book._id, col.key, e.target.value)} rows={2} />;
+    return <input type="text" value={book[col.key]} onChange={e => update(book._id, col.key, e.target.value)} />;
   };
 
   const renderRow = (book) => (
     <tr key={book._id}>
-      {visibleCols.map(col => (
-        <td key={col.key}>
-          {col.key === 'author'
-            ? <SuggestInput value={book.author} onChange={v => update(book._id, 'author', v)} allValues={allAuthors} />
-            : col.key === 'series'
-            ? <SuggestInput value={book.series} onChange={v => update(book._id, 'series', v)} allValues={allSeries} />
-            : col.textarea
-              ? <textarea value={book[col.key]} onChange={e => update(book._id, col.key, e.target.value)} rows={2} />
-              : <input type="text" value={book[col.key]} onChange={e => update(book._id, col.key, e.target.value)} />
-          }
-        </td>
-      ))}
+      {visibleCols.map(col => <td key={col.key}>{renderCell(book, col)}</td>)}
       <td className="del-cell">
         <button className="btn-del" onClick={() => delRow(book._id)}>×</button>
       </td>
@@ -338,8 +132,8 @@ export default function App() {
             <option value="series">series</option>
           </select>
           {status === 'loading' && <span className="msg">Loading…</span>}
-          {status === 'saving' && <span className="msg">Saving…</span>}
-          {status === 'saved' && <span className="msg ok">Saved</span>}
+          {status === 'saving'  && <span className="msg">Saving…</span>}
+          {status === 'saved'   && <span className="msg ok">Saved</span>}
           {error && <span className="msg err" title={error}>Error: {error}</span>}
           <button className="btn-save" onClick={save} disabled={!dirty || status === 'saving'}>
             save
@@ -350,9 +144,7 @@ export default function App() {
       <div className="table-wrap">
         <table>
           <colgroup>
-            {visibleCols.map(col => (
-              <col key={col.key} style={{ width: widths[COLS.indexOf(col)] }} />
-            ))}
+            {visibleCols.map(col => <col key={col.key} style={{ width: widths[COLS.indexOf(col)] }} />)}
             <col style={{ width: 36 }} />
           </colgroup>
           <thead>
@@ -360,7 +152,11 @@ export default function App() {
               {visibleCols.map(col => (
                 <th key={col.key}>
                   {col.label}
-                  <span className="rh" onMouseDown={e => startResize(COLS.indexOf(col), e)} onTouchStart={e => startResize(COLS.indexOf(col), e)} />
+                  <span
+                    className="rh"
+                    onMouseDown={e => startResize(COLS.indexOf(col), e)}
+                    onTouchStart={e => startResize(COLS.indexOf(col), e)}
+                  />
                 </th>
               ))}
               <th />
