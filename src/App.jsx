@@ -111,21 +111,27 @@ export default function App() {
 
   const startResize = (colIdx, e) => {
     e.preventDefault();
-    const x0 = e.clientX;
+    const x0 = e.touches ? e.touches[0].clientX : e.clientX;
     const w0 = widths[colIdx];
     const onMove = (e) => {
+      e.preventDefault();
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
       setWidths(prev => {
         const next = [...prev];
-        next[colIdx] = Math.max(40, w0 + e.clientX - x0);
+        next[colIdx] = Math.max(40, w0 + x - x0);
         return next;
       });
     };
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
   };
 
   return (
@@ -158,7 +164,7 @@ export default function App() {
               {COLS.map((col, i) => (
                 <th key={col.key}>
                   {col.label}
-                  <span className="rh" onMouseDown={e => startResize(i, e)} />
+                  <span className="rh" onMouseDown={e => startResize(i, e)} onTouchStart={e => startResize(i, e)} />
                 </th>
               ))}
               <th />
