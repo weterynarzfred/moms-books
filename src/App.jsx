@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from 'react';
 import { loadBooks, saveBooks } from './github';
 import SuggestInput from './SuggestInput';
 import './App.css';
@@ -13,8 +13,6 @@ const COLS = [
 
 let _id = 0;
 
-// Deterministic ID for entries that don't have one yet (migration).
-// Content-hash so same entry gets same ID on every device.
 function contentId(b) {
   const s = JSON.stringify([b.author, b.series, b.series_number, b.title, b.note]);
   let h = 5381;
@@ -44,27 +42,24 @@ function mergeBooks(localBooks, dirtyIds, tombstones, fetchedBooks) {
 
     if (tombstoneTime !== undefined) {
       if (fb.lastEdit > tombstoneTime) {
-        result.push(fb); // re-added remotely after local delete → restore
+        result.push(fb);
       } else {
-        remainingTombstones[fb.id] = tombstoneTime; // local delete still wins
+        remainingTombstones[fb.id] = tombstoneTime;
       }
     } else if (lb && dirtySet.has(fb.id)) {
       if (lb.lastEdit >= fb.lastEdit) {
         result.push(lb);
         remainingDirtyIds.add(lb.id);
       } else {
-        result.push(fb); // remote is newer
+        result.push(fb);
       }
     } else if (lb) {
-      // Local is clean → remote wins (may have newer remote edit)
       result.push(fb);
     } else {
-      // Not in local at all → new on remote, add it
       result.push(fb);
     }
   }
 
-  // Local-only dirty entries (created locally, not yet on remote)
   for (const lb of localBooks) {
     if (dirtySet.has(lb.id) && !fetchedById.has(lb.id)) {
       result.push(lb);
@@ -96,6 +91,20 @@ const mkRow = () => ({
   note: '',
 });
 
+function GroupHeaderInput({ value, onCommit }) {
+  const [val, setVal] = useState(value);
+  useEffect(() => { setVal(value); }, [value]);
+  return (
+    <input
+      className="group-input"
+      value={val}
+      onChange={e => setVal(e.target.value)}
+      onBlur={() => { if (val !== value) onCommit(val); }}
+      onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+    />
+  );
+}
+
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('gh_token') || '');
   const [input, setInput] = useState('');
@@ -110,6 +119,7 @@ export default function App() {
     } catch {}
     return COLS.map(c => c.width);
   });
+  const [groupBy, setGroupBy] = useState(() => localStorage.getItem('group_by') || '');
   const [dirty, setDirty] = useState(_hasDirtyDraft);
   const [status, setStatus] = useState(_hasDirtyDraft ? '' : 'loading');
   const [error, setError] = useState(null);
@@ -161,17 +171,42 @@ export default function App() {
     () => [...new Set(books.map(b => b.author).filter(Boolean))],
     [books]
   );
-
   const allSeries = useMemo(
     () => [...new Set(books.map(b => b.series).filter(Boolean))],
     [books]
   );
+
+  const visibleCols = useMemo(
+    () => groupBy ? COLS.filter(c => c.key !== groupBy) : COLS,
+    [groupBy]
+  );
+
+  const groups = useMemo(() => {
+    if (!groupBy) return null;
+    const map = new Map();
+    for (const book of books) {
+      const key = book[groupBy] ?? '';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(book);
+    }
+    return [...map.entries()];
+  }, [books, groupBy]);
 
   const update = useCallback((rowId, field, value) => {
     setBooks(prev => prev.map(b => {
       if (b._id !== rowId) return b;
       dirtyIdsRef.current = new Set([...dirtyIdsRef.current, b.id]);
       return { ...b, [field]: value, lastEdit: Date.now() };
+    }));
+    setDirty(true);
+  }, []);
+
+  const renameGroup = useCallback((field, oldName, newName) => {
+    if (oldName === newName) return;
+    setBooks(prev => prev.map(b => {
+      if (b[field] !== oldName) return b;
+      dirtyIdsRef.current = new Set([...dirtyIdsRef.current, b.id]);
+      return { ...b, [field]: newName, lastEdit: Date.now() };
     }));
     setDirty(true);
   }, []);
@@ -267,20 +302,46 @@ export default function App() {
     document.addEventListener('touchend', onUp);
   };
 
+  const handleGroupBy = (val) => {
+    setGroupBy(val);
+    localStorage.setItem('group_by', val);
+  };
+
+  const renderRow = (book) => (
+    <tr key={book._id}>
+      {visibleCols.map(col => (
+        <td key={col.key}>
+          {col.key === 'author'
+            ? <SuggestInput value={book.author} onChange={v => update(book._id, 'author', v)} allValues={allAuthors} />
+            : col.key === 'series'
+            ? <SuggestInput value={book.series} onChange={v => update(book._id, 'series', v)} allValues={allSeries} />
+            : col.textarea
+              ? <textarea value={book[col.key]} onChange={e => update(book._id, col.key, e.target.value)} rows={2} />
+              : <input type="text" value={book[col.key]} onChange={e => update(book._id, col.key, e.target.value)} />
+          }
+        </td>
+      ))}
+      <td className="del-cell">
+        <button className="btn-del" onClick={() => delRow(book._id)}>×</button>
+      </td>
+    </tr>
+  );
+
   return (
     <div className="app">
       <header className="topbar">
         <h1>Books</h1>
         <div className="topbar-right">
+          <select className="group-select" value={groupBy} onChange={e => handleGroupBy(e.target.value)}>
+            <option value="">no grouping</option>
+            <option value="author">author</option>
+            <option value="series">series</option>
+          </select>
           {status === 'loading' && <span className="msg">Loading…</span>}
           {status === 'saving' && <span className="msg">Saving…</span>}
           {status === 'saved' && <span className="msg ok">Saved</span>}
           {error && <span className="msg err" title={error}>Error: {error}</span>}
-          <button
-            className="btn-save"
-            onClick={save}
-            disabled={!dirty || status === 'saving'}
-          >
+          <button className="btn-save" onClick={save} disabled={!dirty || status === 'saving'}>
             save
           </button>
         </div>
@@ -289,56 +350,39 @@ export default function App() {
       <div className="table-wrap">
         <table>
           <colgroup>
-            {widths.map((w, i) => <col key={i} style={{ width: w }} />)}
+            {visibleCols.map(col => (
+              <col key={col.key} style={{ width: widths[COLS.indexOf(col)] }} />
+            ))}
             <col style={{ width: 36 }} />
           </colgroup>
           <thead>
             <tr>
-              {COLS.map((col, i) => (
+              {visibleCols.map(col => (
                 <th key={col.key}>
                   {col.label}
-                  <span className="rh" onMouseDown={e => startResize(i, e)} onTouchStart={e => startResize(i, e)} />
+                  <span className="rh" onMouseDown={e => startResize(COLS.indexOf(col), e)} onTouchStart={e => startResize(COLS.indexOf(col), e)} />
                 </th>
               ))}
               <th />
             </tr>
           </thead>
           <tbody>
-            {books.map(book => (
-              <tr key={book._id}>
-                {COLS.map(col => (
-                  <td key={col.key}>
-                    {col.key === 'author'
-                      ? <SuggestInput
-                          value={book.author}
-                          onChange={v => update(book._id, 'author', v)}
-                          allValues={allAuthors}
+            {groups
+              ? groups.map(([groupName, groupBooks]) => (
+                  <Fragment key={groupBooks[0]._id}>
+                    <tr className="group-row">
+                      <td colSpan={visibleCols.length + 1}>
+                        <GroupHeaderInput
+                          value={groupName}
+                          onCommit={newName => renameGroup(groupBy, groupName, newName)}
                         />
-                      : col.key === 'series'
-                      ? <SuggestInput
-                          value={book.series}
-                          onChange={v => update(book._id, 'series', v)}
-                          allValues={allSeries}
-                        />
-                      : col.textarea
-                        ? <textarea
-                            value={book[col.key]}
-                            onChange={e => update(book._id, col.key, e.target.value)}
-                            rows={2}
-                          />
-                        : <input
-                            type="text"
-                            value={book[col.key]}
-                            onChange={e => update(book._id, col.key, e.target.value)}
-                          />
-                    }
-                  </td>
-                ))}
-                <td className="del-cell">
-                  <button className="btn-del" onClick={() => delRow(book._id)}>×</button>
-                </td>
-              </tr>
-            ))}
+                      </td>
+                    </tr>
+                    {groupBooks.map(renderRow)}
+                  </Fragment>
+                ))
+              : books.map(renderRow)
+            }
           </tbody>
         </table>
       </div>

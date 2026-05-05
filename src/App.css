@@ -186,6 +186,45 @@ textarea:focus {
   color: #2563eb;
 }
 
+/* ── group select ────────────────────────── */
+.group-select {
+  font: inherit;
+  font-size: 12px;
+  background: #222;
+  color: #ccc;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.group-select:focus { outline: 1px solid #555; }
+
+/* ── group header row ────────────────────── */
+.group-row td {
+  background: #1e1e2e;
+  border-top: 2px solid #444;
+  border-bottom: 1px solid #444;
+  padding: 0;
+}
+
+.group-input {
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #aac;
+  background: transparent;
+  outline: none;
+}
+.group-input:focus {
+  background: #022855;
+  outline: 1px solid #005ccc;
+  outline-offset: -2px;
+}
+
 /* ── author suggestions ──────────────────── */
 .author-wrap {
   position: relative;
