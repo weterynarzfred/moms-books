@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { loadBooks, saveBooks } from './github';
 import SuggestInput from './SuggestInput';
 import './App.css';
@@ -12,8 +12,83 @@ const COLS = [
 ];
 
 let _id = 0;
+
+// Deterministic ID for entries that don't have one yet (migration).
+// Content-hash so same entry gets same ID on every device.
+function contentId(b) {
+  const s = JSON.stringify([b.author, b.series, b.series_number, b.title, b.note]);
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+  return 'c' + (h >>> 0).toString(36);
+}
+
+function ensureFields(books) {
+  return books.map(b => ({
+    ...b,
+    id: b.id || contentId(b),
+    lastEdit: b.lastEdit || 0,
+  }));
+}
+
+function mergeBooks(localBooks, dirtyIds, tombstones, fetchedBooks) {
+  const dirtySet = new Set(dirtyIds);
+  const fetchedById = new Map(fetchedBooks.map(b => [b.id, b]));
+  const localById = new Map(localBooks.map(b => [b.id, b]));
+  const result = [];
+  const remainingDirtyIds = new Set();
+  const remainingTombstones = {};
+
+  for (const fb of fetchedBooks) {
+    const tombstoneTime = tombstones[fb.id];
+    const lb = localById.get(fb.id);
+
+    if (tombstoneTime !== undefined) {
+      if (fb.lastEdit > tombstoneTime) {
+        result.push(fb); // re-added remotely after local delete → restore
+      } else {
+        remainingTombstones[fb.id] = tombstoneTime; // local delete still wins
+      }
+    } else if (lb && dirtySet.has(fb.id)) {
+      if (lb.lastEdit >= fb.lastEdit) {
+        result.push(lb);
+        remainingDirtyIds.add(lb.id);
+      } else {
+        result.push(fb); // remote is newer
+      }
+    } else if (lb) {
+      // Local is clean → remote wins (may have newer remote edit)
+      result.push(fb);
+    } else {
+      // Not in local at all → new on remote, add it
+      result.push(fb);
+    }
+  }
+
+  // Local-only dirty entries (created locally, not yet on remote)
+  for (const lb of localBooks) {
+    if (dirtySet.has(lb.id) && !fetchedById.has(lb.id)) {
+      result.push(lb);
+      remainingDirtyIds.add(lb.id);
+    }
+  }
+
+  return {
+    books: result,
+    dirtyIds: [...remainingDirtyIds],
+    tombstones: remainingTombstones,
+    dirty: remainingDirtyIds.size > 0 || Object.keys(remainingTombstones).length > 0,
+  };
+}
+
+const _draft = (() => {
+  try { return JSON.parse(localStorage.getItem('books_draft')); } catch { return null; }
+})();
+const _hasDirtyDraft = _draft?.dirty === true;
+
 const mkRow = () => ({
   _id: ++_id,
+  id: crypto.randomUUID(),
+  lastEdit: Date.now(),
   author: '',
   series: '',
   series_number: '',
@@ -24,19 +99,39 @@ const mkRow = () => ({
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('gh_token') || '');
   const [input, setInput] = useState('');
-  const [books, setBooks] = useState([]);
-  const [sha, setSha] = useState(null);
+  const [books, setBooks] = useState(() =>
+    _hasDirtyDraft ? ensureFields(_draft.books).map(b => ({ ...b, _id: ++_id })) : []
+  );
+  const [sha, setSha] = useState(_hasDirtyDraft ? _draft.sha : null);
   const [widths, setWidths] = useState(COLS.map(c => c.width));
-  const [dirty, setDirty] = useState(false);
-  const [status, setStatus] = useState('loading');
+  const [dirty, setDirty] = useState(_hasDirtyDraft);
+  const [status, setStatus] = useState(_hasDirtyDraft ? '' : 'loading');
   const [error, setError] = useState(null);
+
+  const dirtyIdsRef = useRef(new Set(_hasDirtyDraft ? (_draft.dirtyIds || []) : []));
+  const tombstonesRef = useRef(_hasDirtyDraft ? (_draft.tombstones || {}) : {});
 
   useEffect(() => {
     if (!token) return;
     loadBooks()
-      .then(({ books, sha }) => {
-        setBooks(books.map(b => ({ ...b, _id: ++_id })));
-        setSha(sha);
+      .then(({ books: fetched, sha: fetchedSha }) => {
+        const withFields = ensureFields(fetched);
+        if (_hasDirtyDraft) {
+          const { books: merged, dirtyIds, tombstones, dirty: mergedDirty } = mergeBooks(
+            ensureFields(_draft.books),
+            [...dirtyIdsRef.current],
+            tombstonesRef.current,
+            withFields
+          );
+          setBooks(merged.map(b => ({ ...b, _id: ++_id })));
+          setSha(fetchedSha);
+          dirtyIdsRef.current = new Set(dirtyIds);
+          tombstonesRef.current = tombstones;
+          setDirty(mergedDirty);
+        } else {
+          setBooks(withFields.map(b => ({ ...b, _id: ++_id })));
+          setSha(fetchedSha);
+        }
         setStatus('');
       })
       .catch(err => {
@@ -44,6 +139,17 @@ export default function App() {
         setStatus('');
       });
   }, [token]);
+
+  useEffect(() => {
+    const clean = books.map(({ _id, ...rest }) => rest);
+    localStorage.setItem('books_draft', JSON.stringify({
+      books: clean,
+      sha,
+      dirty,
+      dirtyIds: [...dirtyIdsRef.current],
+      tombstones: tombstonesRef.current,
+    }));
+  }, [books, sha, dirty]);
 
   const allAuthors = useMemo(
     () => [...new Set(books.map(b => b.author).filter(Boolean))],
@@ -55,8 +161,12 @@ export default function App() {
     [books]
   );
 
-  const update = useCallback((id, field, value) => {
-    setBooks(prev => prev.map(b => b._id === id ? { ...b, [field]: value } : b));
+  const update = useCallback((rowId, field, value) => {
+    setBooks(prev => prev.map(b => {
+      if (b._id !== rowId) return b;
+      dirtyIdsRef.current = new Set([...dirtyIdsRef.current, b.id]);
+      return { ...b, [field]: value, lastEdit: Date.now() };
+    }));
     setDirty(true);
   }, []);
 
@@ -88,13 +198,22 @@ export default function App() {
   }
 
   const addRow = () => {
-    setBooks(prev => [...prev, mkRow()]);
+    const row = mkRow();
+    dirtyIdsRef.current = new Set([...dirtyIdsRef.current, row.id]);
+    setBooks(prev => [...prev, row]);
     setDirty(true);
   };
 
-  const delRow = (id) => {
+  const delRow = (rowId) => {
     if (!window.confirm('Delete this row?')) return;
-    setBooks(prev => prev.filter(b => b._id !== id));
+    setBooks(prev => {
+      const book = prev.find(b => b._id === rowId);
+      if (book) {
+        tombstonesRef.current = { ...tombstonesRef.current, [book.id]: Date.now() };
+        dirtyIdsRef.current.delete(book.id);
+      }
+      return prev.filter(b => b._id !== rowId);
+    });
     setDirty(true);
   };
 
@@ -104,6 +223,8 @@ export default function App() {
     try {
       const clean = books.map(({ _id, ...rest }) => rest);
       const newSha = await saveBooks(clean, sha);
+      dirtyIdsRef.current = new Set();
+      tombstonesRef.current = {};
       setSha(newSha);
       setDirty(false);
       setStatus('saved');
@@ -194,15 +315,15 @@ export default function App() {
                         />
                       : col.textarea
                         ? <textarea
-                          value={book[col.key]}
-                          onChange={e => update(book._id, col.key, e.target.value)}
-                          rows={2}
-                        />
+                            value={book[col.key]}
+                            onChange={e => update(book._id, col.key, e.target.value)}
+                            rows={2}
+                          />
                         : <input
-                          type="text"
-                          value={book[col.key]}
-                          onChange={e => update(book._id, col.key, e.target.value)}
-                        />
+                            type="text"
+                            value={book[col.key]}
+                            onChange={e => update(book._id, col.key, e.target.value)}
+                          />
                     }
                   </td>
                 ))}
