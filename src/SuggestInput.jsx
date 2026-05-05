@@ -1,19 +1,26 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import Fuse from 'fuse.js';
 
 export default function SuggestInput({ value, onChange, allValues }) {
   const [suggestions, setSuggestions] = useState([]);
   const timerRef     = useRef(null);
   const containerRef = useRef(null);
 
+  const fuse = useMemo(
+    () => new Fuse(allValues, { threshold: 0.4, includeScore: false }),
+    [allValues]
+  );
+
   useEffect(() => {
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      const q = value.trim().toLowerCase();
+      const q = value.trim();
       if (!q) { setSuggestions([]); return; }
-      setSuggestions(allValues.filter(a => a !== value && a.toLowerCase().includes(q)));
+      const results = fuse.search(q).map(r => r.item).filter(a => a !== value);
+      setSuggestions(results);
     }, 250);
     return () => clearTimeout(timerRef.current);
-  }, [value, allValues]);
+  }, [value, fuse]);
 
   useEffect(() => {
     const hide = (e) => {
