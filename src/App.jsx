@@ -288,6 +288,7 @@ export default function App() {
                     className="rh"
                     onMouseDown={e => startResize(COLS.indexOf(col), e)}
                     onTouchStart={e => startResize(COLS.indexOf(col), e)}
+                    onClick={e => e.stopPropagation()}
                   />
                 </th>
               ))}
