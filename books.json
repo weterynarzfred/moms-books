@@ -78,7 +78,7 @@
     "title": "Inferno",
     "note": "",
     "id": "c1afmcz4",
-    "lastEdit": 0
+    "lastEdit": 1777968511770
   },
   {
     "author": "Orson Scott Card",
@@ -87,7 +87,7 @@
     "title": "Gra Endera",
     "note": "",
     "id": "c1qb7cv7",
-    "lastEdit": 0
+    "lastEdit": 1777961660910
   },
   {
     "author": "Orson Scott Card",
@@ -96,15 +96,33 @@
     "title": "Mówca Umarłych",
     "note": "",
     "id": "c1n7i9ul",
-    "lastEdit": 0
+    "lastEdit": 1777961669334
   },
   {
     "id": "0889aee1-f201-4250-8100-dae008b18cc1",
-    "lastEdit": 1777960857752,
+    "lastEdit": 1777961668314,
     "author": "Orson Scott Card",
     "series": "Ender",
     "series_number": "3",
     "title": "Ksenocyd",
+    "note": ""
+  },
+  {
+    "id": "15e8b877-d0ce-43f0-85b7-8bcbe1ab0dee",
+    "lastEdit": 1777965762593,
+    "author": "Orson Scott Card",
+    "series": "Tropiciel",
+    "series_number": "1",
+    "title": "Tropiciel",
+    "note": ""
+  },
+  {
+    "id": "0d3a9e6c-ffea-49d4-b065-d263536945e3",
+    "lastEdit": 1777968613399,
+    "author": "Orson Scott Card",
+    "series": "Tropiciel",
+    "series_number": "2",
+    "title": "Ruiny",
     "note": ""
   }
 ]
