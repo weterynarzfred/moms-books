@@ -4,76 +4,107 @@
     "series": "Cykl Demoniczny",
     "series_number": "1.1",
     "title": "Malowany Człowiek: Księga I",
-    "note": "fantasy"
+    "note": "fantasy",
+    "id": "ca3o84g",
+    "lastEdit": 0
   },
   {
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "1.2",
     "title": "Malowany Człowiek: Księga II",
-    "note": "fantasy as well"
+    "note": "fantasy as well",
+    "id": "c1buu7ze",
+    "lastEdit": 0
   },
   {
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "2.1",
     "title": "Pustynna Włócznia: Księga I",
-    "note": ""
+    "note": "",
+    "id": "c1afquf0",
+    "lastEdit": 0
   },
   {
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "2.2",
     "title": "Pustynna Włócznia: Księga I",
-    "note": ""
+    "note": "",
+    "id": "cnl3xun",
+    "lastEdit": 0
   },
   {
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "3.1",
     "title": "Wojna w Blasku Dnia: Księga I",
-    "note": ""
+    "note": "",
+    "id": "c63dq38",
+    "lastEdit": 0
   },
   {
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "3.2",
     "title": "Wojna w Blasku Dnia: Księga II",
-    "note": ""
+    "note": "",
+    "id": "c15eb6e6",
+    "lastEdit": 0
   },
   {
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "4.1",
     "title": "Tron z Czaszek: Księga I",
-    "note": ""
+    "note": "",
+    "id": "cxj46t7",
+    "lastEdit": 0
   },
   {
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "4.2",
     "title": "Tron z Czaszek: Księga II",
-    "note": ""
+    "note": "",
+    "id": "c1id8qr5",
+    "lastEdit": 0
   },
   {
     "author": "Dan Brown",
     "series": "Robert Langdon",
     "series_number": "4",
     "title": "Inferno",
-    "note": ""
+    "note": "",
+    "id": "c1afmcz4",
+    "lastEdit": 0
   },
   {
     "author": "Orson Scott Card",
     "series": "Ender",
     "series_number": "1",
     "title": "Gra Endera",
-    "note": ""
+    "note": "",
+    "id": "c1qb7cv7",
+    "lastEdit": 0
   },
   {
     "author": "Orson Scott Card",
     "series": "Ender",
     "series_number": "2",
     "title": "Mówca Umarłych",
+    "note": "",
+    "id": "c1n7i9ul",
+    "lastEdit": 0
+  },
+  {
+    "id": "0889aee1-f201-4250-8100-dae008b18cc1",
+    "lastEdit": 1777960857752,
+    "author": "Orson Scott Card",
+    "series": "Ender",
+    "series_number": "3",
+    "title": "Ksenocyd",
     "note": ""
   }
 ]
