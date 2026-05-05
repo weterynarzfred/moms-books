@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { loadBooks, saveBooks } from './github';
-import AuthorInput from './AuthorInput';
+import SuggestInput from './SuggestInput';
 import './App.css';
 
 const COLS = [
@@ -47,6 +47,11 @@ export default function App() {
 
   const allAuthors = useMemo(
     () => [...new Set(books.map(b => b.author).filter(Boolean))],
+    [books]
+  );
+
+  const allSeries = useMemo(
+    () => [...new Set(books.map(b => b.series).filter(Boolean))],
     [books]
   );
 
@@ -176,11 +181,17 @@ export default function App() {
                 {COLS.map(col => (
                   <td key={col.key}>
                     {col.key === 'author'
-                      ? <AuthorInput
-                        value={book.author}
-                        onChange={v => update(book._id, 'author', v)}
-                        allAuthors={allAuthors}
-                      />
+                      ? <SuggestInput
+                          value={book.author}
+                          onChange={v => update(book._id, 'author', v)}
+                          allValues={allAuthors}
+                        />
+                      : col.key === 'series'
+                      ? <SuggestInput
+                          value={book.series}
+                          onChange={v => update(book._id, 'series', v)}
+                          allValues={allSeries}
+                        />
                       : col.textarea
                         ? <textarea
                           value={book[col.key]}
