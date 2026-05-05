@@ -11,13 +11,69 @@
     "series": "Cykl Demoniczny",
     "series_number": "1.2",
     "title": "Malowany Człowiek: Księga II",
-    "note": "fantasy as well "
+    "note": "fantasy as well"
   },
   {
     "author": "Peter V. Brett",
-    "series": "",
-    "series_number": "",
-    "title": "",
+    "series": "Cykl Demoniczny",
+    "series_number": "2.1",
+    "title": "Pustynna Włócznia: Księga I",
+    "note": ""
+  },
+  {
+    "author": "Peter V. Brett",
+    "series": "Cykl Demoniczny",
+    "series_number": "2.2",
+    "title": "Pustynna Włócznia: Księga I",
+    "note": ""
+  },
+  {
+    "author": "Peter V. Brett",
+    "series": "Cykl Demoniczny",
+    "series_number": "3.1",
+    "title": "Wojna w Blasku Dnia: Księga I",
+    "note": ""
+  },
+  {
+    "author": "Peter V. Brett",
+    "series": "Cykl Demoniczny",
+    "series_number": "3.2",
+    "title": "Wojna w Blasku Dnia: Księga II",
+    "note": ""
+  },
+  {
+    "author": "Peter V. Brett",
+    "series": "Cykl Demoniczny",
+    "series_number": "4.1",
+    "title": "Tron z Czaszek: Księga I",
+    "note": ""
+  },
+  {
+    "author": "Peter V. Brett",
+    "series": "Cykl Demoniczny",
+    "series_number": "4.2",
+    "title": "Tron z Czaszek: Księga II",
+    "note": ""
+  },
+  {
+    "author": "Dan Brown",
+    "series": "Robert Langdon",
+    "series_number": "4",
+    "title": "Inferno",
+    "note": ""
+  },
+  {
+    "author": "Orson Scott Card",
+    "series": "Ender",
+    "series_number": "1",
+    "title": "Gra Endera",
+    "note": ""
+  },
+  {
+    "author": "Orson Scott Card",
+    "series": "Ender",
+    "series_number": "2",
+    "title": "Mówca Umarłych",
     "note": ""
   }
 ]
