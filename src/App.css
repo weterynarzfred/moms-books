@@ -132,6 +132,21 @@ textarea:focus {
   border-radius: 2px;
 }
 
+/* ── edited row highlight ────────────────── */
+@keyframes row-edited-fade {
+  0%   { box-shadow: inset 0 0 0 2px #3b82f6, inset 0 0 12px rgba(59, 130, 246, 0.35); }
+  100% { box-shadow: inset 0 0 0 2px transparent, inset 0 0 12px transparent; }
+}
+
+.row-edited td {
+  animation: row-edited-fade 5s ease-out forwards;
+}
+
+/* ── sortable headers ────────────────────── */
+thead th.sortable { cursor: pointer; }
+thead th.sortable:hover { background: #3a3a3a; }
+.sort-arrow { font-size: 10px; margin-left: 2px; opacity: 0.8; }
+
 /* ── resize handle ───────────────────────── */
 .rh {
   position: absolute;

@@ -1,16 +1,55 @@
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
 import { useBooks } from './useBooks';
 import SuggestInput from './SuggestInput';
 import GroupHeaderInput from './GroupHeaderInput';
 import './App.css';
 
 const COLS = [
-  { key: 'author', label: 'Author', width: 160, textarea: false },
-  { key: 'series', label: 'Series', width: 160, textarea: false },
+  { key: 'author', label: 'Author', width: 160, textarea: false, sortable: true },
+  { key: 'series', label: 'Series', width: 160, textarea: false, sortable: true },
   { key: 'series_number', label: '#', width: 60, textarea: false },
-  { key: 'title', label: 'Title', width: 220, textarea: false },
+  { key: 'title', label: 'Title', width: 220, textarea: false, sortable: true },
   { key: 'note', label: 'Note', width: 320, textarea: true },
 ];
+
+const SORT_DEFAULT = { key: 'author', dir: 1 };
+
+function cmpStr(a, b) {
+  const av = (a ?? '').toLowerCase();
+  const bv = (b ?? '').toLowerCase();
+  if (av === '' && bv === '') return 0;
+  if (av === '') return 1;
+  if (bv === '') return -1;
+  return av < bv ? -1 : av > bv ? 1 : 0;
+}
+
+function cmpNum(a, b) {
+  const an = parseFloat(a);
+  const bn = parseFloat(b);
+  if (isNaN(an) && isNaN(bn)) return 0;
+  if (isNaN(an)) return 1;
+  if (isNaN(bn)) return -1;
+  return an - bn;
+}
+
+function sortBooks(books, sort) {
+  return [...books].sort((a, b) => {
+    const av = (a[sort.key] ?? '').toLowerCase();
+    const bv = (b[sort.key] ?? '').toLowerCase();
+    if (av === '' && bv !== '') return 1;
+    if (bv === '' && av !== '') return -1;
+    const primary = (av < bv ? -1 : av > bv ? 1 : 0) * sort.dir;
+    if (primary !== 0) return primary;
+    if (sort.key === 'author') {
+      const bySeries = cmpStr(a.series, b.series);
+      if (bySeries !== 0) return bySeries;
+    }
+    if (sort.key === 'author' || sort.key === 'series') {
+      return cmpNum(a.series_number, b.series_number);
+    }
+    return 0;
+  });
+}
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('gh_token') || '');
@@ -24,9 +63,48 @@ export default function App() {
     return COLS.map(c => c.width);
   });
   const [groupBy, setGroupBy] = useState(() => localStorage.getItem('group_by') || '');
+  const [sort, setSort] = useState(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem('sort'));
+      if (s?.key) return s;
+    } catch {}
+    return SORT_DEFAULT;
+  });
 
   const allAuthors = useMemo(() => [...new Set(books.map(b => b.author).filter(Boolean))], [books]);
   const allSeries  = useMemo(() => [...new Set(books.map(b => b.series).filter(Boolean))],  [books]);
+
+  const sortedBooks = useMemo(() => sortBooks(books, sort), [books, sort]);
+
+  const [frozenOrder, setFrozenOrder]       = useState(null);
+  const [recentlyEditedId, setRecentlyEditedId] = useState(null);
+  const blurTimerRef = useRef(null);
+
+  const displayedBooks = useMemo(() => {
+    if (!frozenOrder) return sortedBooks;
+    const byId = new Map(books.map(b => [b._id, b]));
+    return frozenOrder.map(id => byId.get(id)).filter(Boolean);
+  }, [frozenOrder, books, sortedBooks]);
+
+  useEffect(() => {
+    if (!recentlyEditedId) return;
+    const el = document.querySelector(`tr[data-id="${recentlyEditedId}"]`);
+    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const t = setTimeout(() => setRecentlyEditedId(null), 5000);
+    return () => clearTimeout(t);
+  }, [recentlyEditedId]);
+
+  const handleCellFocus = () => {
+    clearTimeout(blurTimerRef.current);
+    setFrozenOrder(prev => prev ?? sortedBooks.map(b => b._id));
+  };
+
+  const handleCellBlur = (rowId) => {
+    blurTimerRef.current = setTimeout(() => {
+      setFrozenOrder(null);
+      setRecentlyEditedId(rowId);
+    }, 0);
+  };
 
   const visibleCols = useMemo(
     () => groupBy ? COLS.filter(c => c.key !== groupBy) : COLS,
@@ -36,21 +114,30 @@ export default function App() {
   const groups = useMemo(() => {
     if (!groupBy) return null;
     const map = new Map();
-    for (const book of books) {
+    for (const book of displayedBooks) {
       const key = book[groupBy] ?? '';
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(book);
     }
     return [...map.entries()];
-  }, [books, groupBy]);
+  }, [displayedBooks, groupBy]);
 
   const handleGroupBy = (val) => {
     setGroupBy(val);
     localStorage.setItem('group_by', val);
   };
 
+  const handleSort = (key) => {
+    setSort(prev => {
+      const next = prev.key === key ? { key, dir: -prev.dir } : { key, dir: 1 };
+      localStorage.setItem('sort', JSON.stringify(next));
+      return next;
+    });
+  };
+
   const startResize = (colIdx, e) => {
     e.preventDefault();
+    e.stopPropagation();
     const x0 = e.touches ? e.touches[0].clientX : e.clientX;
     const w0 = widths[colIdx];
     const onMove = (e) => {
@@ -113,7 +200,13 @@ export default function App() {
   };
 
   const renderRow = (book) => (
-    <tr key={book._id}>
+    <tr
+      key={book._id}
+      data-id={book._id}
+      className={recentlyEditedId === book._id ? 'row-edited' : undefined}
+      onFocus={() => handleCellFocus(book._id)}
+      onBlur={() => handleCellBlur(book._id)}
+    >
       {visibleCols.map(col => <td key={col.key}>{renderCell(book, col)}</td>)}
       <td className="del-cell">
         <button className="btn-del" onClick={() => delRow(book._id)}>×</button>
@@ -150,8 +243,15 @@ export default function App() {
           <thead>
             <tr>
               {visibleCols.map(col => (
-                <th key={col.key}>
+                <th
+                  key={col.key}
+                  className={col.sortable ? 'sortable' : undefined}
+                  onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                >
                   {col.label}
+                  {col.sortable && sort.key === col.key && (
+                    <span className="sort-arrow">{sort.dir === 1 ? ' ↑' : ' ↓'}</span>
+                  )}
                   <span
                     className="rh"
                     onMouseDown={e => startResize(COLS.indexOf(col), e)}
@@ -177,7 +277,7 @@ export default function App() {
                     {groupBooks.map(renderRow)}
                   </Fragment>
                 ))
-              : books.map(renderRow)
+              : displayedBooks.map(renderRow)
             }
           </tbody>
         </table>
