@@ -1,106 +1,142 @@
 [
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "1.1",
     "title": "Malowany Człowiek: Księga I",
     "note": "fantasy",
     "id": "ca3o84g",
-    "lastEdit": 0
+    "lastEdit": 1778046063195
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "1.2",
     "title": "Malowany Człowiek: Księga II",
     "note": "fantasy as well",
     "id": "c1buu7ze",
-    "lastEdit": 0
+    "lastEdit": 1778046063898
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "2.1",
     "title": "Pustynna Włócznia: Księga I",
     "note": "",
     "id": "c1afquf0",
-    "lastEdit": 0
+    "lastEdit": 1778046064722
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "2.2",
     "title": "Pustynna Włócznia: Księga I",
     "note": "",
     "id": "cnl3xun",
-    "lastEdit": 0
+    "lastEdit": 1778046065299
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "3.1",
     "title": "Wojna w Blasku Dnia: Księga I",
     "note": "",
     "id": "c63dq38",
-    "lastEdit": 0
+    "lastEdit": 1778046066466
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "3.2",
     "title": "Wojna w Blasku Dnia: Księga II",
     "note": "",
     "id": "c15eb6e6",
-    "lastEdit": 0
+    "lastEdit": 1778046066962
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "4.1",
     "title": "Tron z Czaszek: Księga I",
     "note": "",
     "id": "cxj46t7",
-    "lastEdit": 0
+    "lastEdit": 1778046067650
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Peter V. Brett",
     "series": "Cykl Demoniczny",
     "series_number": "4.2",
     "title": "Tron z Czaszek: Księga II",
     "note": "",
     "id": "c1id8qr5",
-    "lastEdit": 0
+    "lastEdit": 1778046068035
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Dan Brown",
     "series": "Robert Langdon",
     "series_number": "4",
     "title": "Inferno",
     "note": "",
     "id": "c1afmcz4",
-    "lastEdit": 1777968511770
+    "lastEdit": 1778046068370
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Orson Scott Card",
     "series": "Ender",
     "series_number": "1",
     "title": "Gra Endera",
     "note": "",
     "id": "c1qb7cv7",
-    "lastEdit": 1777961660910
+    "lastEdit": 1778046068754
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "author": "Orson Scott Card",
     "series": "Ender",
     "series_number": "2",
     "title": "Mówca Umarłych",
     "note": "",
     "id": "c1n7i9ul",
-    "lastEdit": 1777961669334
+    "lastEdit": 1778046070051
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": true,
     "id": "0889aee1-f201-4250-8100-dae008b18cc1",
-    "lastEdit": 1777961668314,
+    "lastEdit": 1778046070554,
     "author": "Orson Scott Card",
     "series": "Ender",
     "series_number": "3",
@@ -108,6 +144,9 @@
     "note": ""
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": false,
     "id": "15e8b877-d0ce-43f0-85b7-8bcbe1ab0dee",
     "lastEdit": 1777965762593,
     "author": "Orson Scott Card",
@@ -117,6 +156,9 @@
     "note": ""
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": false,
     "id": "0d3a9e6c-ffea-49d4-b065-d263536945e3",
     "lastEdit": 1777968613399,
     "author": "Orson Scott Card",
@@ -126,6 +168,9 @@
     "note": ""
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": false,
     "id": "2b4df254-e62e-4ec4-9937-0976b11a59ac",
     "lastEdit": 1777969558608,
     "author": "John Norman",
@@ -135,8 +180,11 @@
     "note": ""
   },
   {
+    "available": false,
+    "uploaded": false,
+    "read": false,
     "id": "d6069c09-b20d-48ca-ba58-921c82290301",
-    "lastEdit": 1777969590848,
+    "lastEdit": 1777969708150,
     "author": "Gail Carriger",
     "series": "Protektorat Parasola",
     "series_number": "1",
