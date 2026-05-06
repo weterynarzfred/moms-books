@@ -6,17 +6,19 @@ import GroupHeaderInput from './GroupHeaderInput';
 import './App.scss';
 
 const COLS = [
-  { key: 'author', label: 'Author', width: 160, textarea: false, sortable: true },
-  { key: 'series', label: 'Series', width: 160, textarea: false, sortable: true },
-  { key: 'series_number', label: '#', width: 60, textarea: false },
-  { key: 'title', label: 'Title', width: 220, textarea: false, sortable: true },
-  { key: 'note', label: 'Note', width: 320, textarea: true },
+  { key: 'available', label: 'Avail', width: 52, checkbox: true, readonly: true, sortable: true },
+  { key: 'uploaded', label: 'Up', width: 52, checkbox: true, readonly: true, sortable: true },
+  { key: 'read', label: 'Read', width: 52, checkbox: true, readonly: false, sortable: true },
+  { key: 'title', label: 'Title', width: 220, sortable: true },
+  { key: 'author', label: 'Author', width: 160, sortable: true },
+  { key: 'series', label: 'Series', width: 160, sortable: true },
+  { key: 'series_number', label: '#', width: 60 },
 ];
 
 const SORT_DEFAULT = { key: 'author', dir: 1 };
 
 const bookData = (b) =>
-  JSON.stringify([b.author, b.series, b.series_number, b.title, b.note]);
+  JSON.stringify([b.available, b.uploaded, b.read, b.author, b.series, b.series_number, b.title]);
 
 function cmpStr(a, b) {
   const av = (a ?? '').toLowerCase();
@@ -43,15 +45,20 @@ function authorSortKey(name) {
 }
 
 function sortBooks(books, sort) {
+  const col = COLS.find(c => c.key === sort.key);
   const getKey = sort.key === 'author'
     ? b => authorSortKey(b.author)
-    : b => (b[sort.key] ?? '').toLowerCase();
+    : col?.checkbox
+      ? b => (b[sort.key] ? 1 : 0)
+      : b => (b[sort.key] ?? '').toLowerCase();
 
   return [...books].sort((a, b) => {
     const av = getKey(a);
     const bv = getKey(b);
-    if (av === '' && bv !== '') return 1;
-    if (bv === '' && av !== '') return -1;
+    if (!col?.checkbox) {
+      if (av === '' && bv !== '') return 1;
+      if (bv === '' && av !== '') return -1;
+    }
     const primary = (av < bv ? -1 : av > bv ? 1 : 0) * sort.dir;
     if (primary !== 0) return primary;
     if (sort.key === 'author') {
@@ -73,7 +80,7 @@ export default function App() {
     try {
       const saved = JSON.parse(localStorage.getItem('col_widths'));
       if (Array.isArray(saved) && saved.length === COLS.length) return saved;
-    } catch {}
+    } catch { }
     return COLS.map(c => c.width);
   });
   const [groupBy, setGroupBy] = useState(() => localStorage.getItem('group_by') || '');
@@ -81,19 +88,19 @@ export default function App() {
     try {
       const s = JSON.parse(localStorage.getItem('sort'));
       if (s?.key) return s;
-    } catch {}
+    } catch { }
     return SORT_DEFAULT;
   });
 
   const allAuthors = useMemo(() => [...new Set(books.map(b => b.author).filter(Boolean))], [books]);
-  const allSeries  = useMemo(() => [...new Set(books.map(b => b.series).filter(Boolean))],  [books]);
+  const allSeries = useMemo(() => [...new Set(books.map(b => b.series).filter(Boolean))], [books]);
 
   const sortedBooks = useMemo(() => sortBooks(books, sort), [books, sort]);
 
-  const [frozenOrder, setFrozenOrder]           = useState(null);
+  const [frozenOrder, setFrozenOrder] = useState(null);
   const [recentlyEditedId, setRecentlyEditedId] = useState(null);
-  const blurTimerRef     = useRef(null);
-  const isFrozenRef      = useRef(false);
+  const blurTimerRef = useRef(null);
+  const isFrozenRef = useRef(false);
   const focusSnapshotRef = useRef(null);
 
   const displayedBooks = useMemo(() => {
@@ -222,13 +229,13 @@ export default function App() {
   }
 
   const renderCell = (book, col) => {
+    if (col.checkbox)
+      return <div className={`cb${book[col.key] ? ' cb-on' : ''}`} onClick={col.readonly ? undefined : () => update(book._id, col.key, !book[col.key])} />;
     if (col.key === 'author')
       return <SuggestInput value={book.author} onChange={v => update(book._id, 'author', v)} allValues={allAuthors} />;
     if (col.key === 'series')
       return <SuggestInput value={book.series} onChange={v => update(book._id, 'series', v)} allValues={allSeries} />;
-    if (col.textarea)
-      return <textarea value={book[col.key]} onChange={e => update(book._id, col.key, e.target.value)} rows={2} />;
-    return <input type="text" value={book[col.key]} onChange={e => update(book._id, col.key, e.target.value)} />;
+    return <input type="text" value={book[col.key] ?? ''} onChange={e => update(book._id, col.key, e.target.value)} />;
   };
 
   const renderRow = (book) => (
@@ -239,7 +246,11 @@ export default function App() {
       onFocus={() => handleCellFocus(book)}
       onBlur={() => handleCellBlur(book)}
     >
-      {visibleCols.map(col => <td key={col.key}>{renderCell(book, col)}</td>)}
+      {visibleCols.map(col => (
+        <td key={col.key} className={col.checkbox ? `cell-checkbox${col.readonly ? ' readonly' : ''}` : undefined}>
+          {renderCell(book, col)}
+        </td>
+      ))}
       <td className="del-cell">
         <button className="btn-del" onClick={() => delRow(book._id)}>×</button>
       </td>
@@ -257,8 +268,8 @@ export default function App() {
             <option value="series">series</option>
           </select>
           {status === 'loading' && <span className="msg">Loading…</span>}
-          {status === 'saving'  && <span className="msg">Saving…</span>}
-          {status === 'saved'   && <span className="msg ok">Saved</span>}
+          {status === 'saving' && <span className="msg">Saving…</span>}
+          {status === 'saved' && <span className="msg ok">Saved</span>}
           {error && <span className="msg err" title={error}>Error: {error}</span>}
           <button className="btn-save" onClick={save} disabled={!dirty || status === 'saving'}>
             save
@@ -267,37 +278,38 @@ export default function App() {
       </header>
 
       <div className="table-wrap">
-        <table>
-          <colgroup>
-            {visibleCols.map(col => <col key={col.key} style={{ width: widths[COLS.indexOf(col)] }} />)}
-            <col style={{ width: 36 }} />
-          </colgroup>
-          <thead>
-            <tr>
-              {visibleCols.map(col => (
-                <th
-                  key={col.key}
-                  className={col.sortable ? 'sortable' : undefined}
-                  onClick={col.sortable ? () => handleSort(col.key) : undefined}
-                >
-                  {col.label}
-                  {col.sortable && sort.key === col.key && (
-                    <span className="sort-arrow">{sort.dir === 1 ? ' ↑' : ' ↓'}</span>
-                  )}
-                  <span
-                    className="rh"
-                    onMouseDown={e => startResize(COLS.indexOf(col), e)}
-                    onTouchStart={e => startResize(COLS.indexOf(col), e)}
-                    onClick={e => e.stopPropagation()}
-                  />
-                </th>
-              ))}
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {groups
-              ? groups.map(([groupName, groupBooks]) => (
+        <div className="table-frame">
+          <table>
+            <colgroup>
+              {visibleCols.map(col => <col key={col.key} style={{ width: widths[COLS.indexOf(col)] }} />)}
+              <col style={{ width: 26 }} />
+            </colgroup>
+            <thead>
+              <tr>
+                {visibleCols.map(col => (
+                  <th
+                    key={col.key}
+                    className={col.sortable ? 'sortable' : undefined}
+                    onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                  >
+                    {col.label}
+                    {col.sortable && sort.key === col.key && (
+                      <span className="sort-arrow">{sort.dir === 1 ? ' ↑' : ' ↓'}</span>
+                    )}
+                    <span
+                      className="rh"
+                      onMouseDown={e => startResize(COLS.indexOf(col), e)}
+                      onTouchStart={e => startResize(COLS.indexOf(col), e)}
+                      onClick={e => e.stopPropagation()}
+                    />
+                  </th>
+                ))}
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {groups
+                ? groups.map(([groupName, groupBooks]) => (
                   <Fragment key={groupBooks[0]._id}>
                     <tr className="group-row">
                       <td colSpan={visibleCols.length + 1}>
@@ -310,13 +322,16 @@ export default function App() {
                     {groupBooks.map(renderRow)}
                   </Fragment>
                 ))
-              : displayedBooks.map(renderRow)
-            }
-          </tbody>
-        </table>
+                : displayedBooks.map(renderRow)
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <button className="btn-add" onClick={addRow}>+ Add book</button>
+      <footer className="bottombar">
+        <button className="btn-add" onClick={addRow}>+ Add book</button>
+      </footer>
     </div>
   );
 }

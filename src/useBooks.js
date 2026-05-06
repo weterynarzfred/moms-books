@@ -13,11 +13,13 @@ export const mkRow = () => ({
   _id: ++_id,
   id: crypto.randomUUID(),
   lastEdit: Date.now(),
+  available: false,
+  uploaded: false,
+  read: false,
   author: '',
   series: '',
   series_number: '',
   title: '',
-  note: '',
 });
 
 export function useBooks(token) {

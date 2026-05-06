@@ -1,13 +1,12 @@
-$bg-cell: #0000;
-$bg-cell-alt: #0001;
-$bg-header: #eee;
-$bg-topbar: #bbb;
+$bg-cell: #fff5;
+$bg-cell-alt: #fffa;
+$bg-header: #0a94df;
 $bg-group-row: #ffffff;
 $border: #777;
-$border-subtle: #0002;
+$border-subtle: #0001;
 $focus-bg: #bfdcff;
 $focus-outline: #005ccc;
-$accent: #3b82f6;
+$accent: #0a94df;
 
 @mixin focus-style {
   background: $focus-bg;
@@ -29,10 +28,9 @@ $accent: #3b82f6;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: $bg-topbar;
-  border-bottom: 1px solid $border-subtle;
+  padding: 0.25rem 0.5rem;
   flex-shrink: 0;
+  background-color: #fff;
 
   h1 {
     font-size: 1rem;
@@ -64,30 +62,71 @@ $accent: #3b82f6;
 
 .btn-save {
   padding: 2px 14px;
-  font-size: 14px;
-  background: #7fa8ff;
-  color: #000;
+  font-size: 11px;
+  background: $accent;
+  color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 
   &:disabled {
     opacity: 0.6;
     cursor: default;
   }
   &:not(:disabled):hover {
-    background: #8aa9ff;
+    background: rgba($accent, 0.8);
+  }
+}
+
+// ── bottom bar ───────────────────────────────────
+.bottombar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.5rem;
+  flex-shrink: 0;
+  background-color: #fff;
+
+  .btn-add {
+    padding: 2px 12px;
+    border: 1px dashed #bbb;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #666;
+    font: inherit;
+    font-size: 13px;
+
+    &:hover {
+      border-color: #2563eb;
+      color: #2563eb;
+    }
   }
 }
 
 // ── table ─────────────────────────────────────
 .table-wrap {
   flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   min-height: 0;
+  padding: 0.5rem 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+
+  .table-frame {
+    border: solid $bg-header;
+    border-width: 0 0 0.2rem 0;
+    margin: 0 auto;
+    box-shadow: 1px 1px 3px #0003;
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
 }
 
 table {
@@ -101,9 +140,11 @@ thead th {
   top: 0;
   z-index: 1;
   background: $bg-header;
+  color: #fff;
+  border: 1px solid $border-subtle;
   border: none;
-  padding: 6px 20px 6px 8px;
-  text-align: left;
+  padding: 6px 8px;
+  text-align: center;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -115,7 +156,7 @@ thead th {
     cursor: pointer;
 
     &:hover {
-      background: #e0e0e0;
+      background: rgba($bg-header, 0.8);
     }
   }
 }
@@ -136,9 +177,9 @@ textarea {
   display: block;
   width: 100%;
   border: none;
-  padding: 4px 6px;
+  padding: 6px 6px;
   font: inherit;
-  font-family: serif;
+  font-size: 0.8rem;
   color: inherit;
   background: transparent;
   outline: none;
@@ -191,11 +232,11 @@ textarea {
 
 // ── delete column ─────────────────────────────
 .del-cell {
-  text-align: center;
-  padding: 2px !important;
+  width: 26px;
 }
 
 .btn-del {
+  display: block;
   width: 26px;
   height: 26px;
   line-height: 1;
@@ -204,7 +245,6 @@ textarea {
   background: transparent;
   cursor: pointer;
   color: #bbb;
-  border-radius: 3px;
 
   &:hover {
     background: #fee2e2;
@@ -212,35 +252,60 @@ textarea {
   }
 }
 
-// ── add book button ───────────────────────────
-.btn-add {
-  margin: 8px 12px;
-  padding: 6px 12px;
-  border: 1px dashed #bbb;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 4px;
-  color: #666;
-  font: inherit;
-  font-size: 13px;
-  flex-shrink: 0;
-  align-self: flex-start;
+// ── checkbox cells ────────────────────────────
+.cell-checkbox {
+  text-align: center;
+}
 
-  &:hover {
-    border-color: #2563eb;
-    color: #2563eb;
+.cb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  margin: 0 auto;
+  border: 1px solid $border;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  transition: 0.2s;
+
+  &::after {
+    content: "✓";
+    color: $accent;
+    font-size: 0.75rem;
+    font-weight: 700;
+    position: absolute;
+    display: none;
+  }
+
+  &.cb-on {
+    border-color: $accent;
+
+    &::after {
+      display: block;
+    }
+  }
+
+  .readonly & {
+    cursor: default;
+    background: #e0e0e0;
   }
 }
 
 // ── group select ──────────────────────────────
 .group-select {
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
   background: #ffffff;
   color: #000000;
   border: 1px solid $border-subtle;
   border-radius: 0px;
   padding: 2px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
   cursor: pointer;
 
   &:focus {

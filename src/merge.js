@@ -1,5 +1,5 @@
 export function contentId(b) {
-  const s = JSON.stringify([b.author, b.series, b.series_number, b.title, b.note]);
+  const s = JSON.stringify([b.author, b.series, b.series_number, b.title]);
   let h = 5381;
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
   return 'c' + (h >>> 0).toString(36);
@@ -7,6 +7,9 @@ export function contentId(b) {
 
 export function ensureFields(books) {
   return books.map(b => ({
+    available: false,
+    uploaded: false,
+    read: false,
     ...b,
     id: b.id || contentId(b),
     lastEdit: b.lastEdit || 0,
