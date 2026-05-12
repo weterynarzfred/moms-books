@@ -13,6 +13,7 @@ const COLS = [
   { key: 'author', label: 'Author', width: 160, sortable: true },
   { key: 'series', label: 'Series', width: 160, sortable: true },
   { key: 'series_number', label: '#', width: 60 },
+  { key: 'note', label: 'Note', width: 320, textarea: true },
 ];
 
 const SORT_DEFAULT = { key: 'author', dir: 1 };
@@ -235,10 +236,13 @@ export default function App() {
       return <SuggestInput value={book.author} onChange={v => update(book._id, 'author', v)} allValues={allAuthors} />;
     if (col.key === 'series')
       return <SuggestInput value={book.series} onChange={v => update(book._id, 'series', v)} allValues={allSeries} />;
+    if (col.textarea)
+      return <textarea value={book[col.key] ?? ''} onChange={e => update(book._id, col.key, e.target.value)} />;
+
     return <input type="text" value={book[col.key] ?? ''} onChange={e => update(book._id, col.key, e.target.value)} />;
   };
 
-  const renderRow = (book) => (
+  const renderRow = book => (
     <tr
       key={book._id}
       data-id={book._id}
